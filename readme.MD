@@ -4,7 +4,7 @@ A complete step-by-step guide for running machine learning experiments on NRP Na
 
 ## Prerequisites
 - Access to Nautilus cluster with kubectl configured
-- Your namespace: `longweiwangusd`
+- Your namespace: `namespace`
 - Dataset files ready for upload
 - Training code ready
 
@@ -24,7 +24,7 @@ A complete step-by-step guide for running machine learning experiments on NRP Na
 kubectl apply -f pvc.yaml
 
 # Verify PVC is bound
-kubectl get pvc -n longweiwangusd
+kubectl get pvc -n namespace
 ```
 
 Expected output: `STATUS: Bound`
@@ -36,13 +36,13 @@ Expected output: `STATUS: Bound`
 kubectl apply -f upload_pod.yaml
 
 # Wait for pod to be running
-kubectl get pods -n longweiwangusd
+kubectl get pods -n namespace
 
 # Upload your datasets (replace with your actual filenames)
-kubectl cp ../../Downloads/imagenet100.zip longweiwangusd/data-upload-pod:/data/
+kubectl cp ../../Downloads/imagenet100.zip namespace/data-upload-pod:/data/
 
 # Access pod to unzip datasets
-kubectl exec -it data-upload-pod -n longweiwangusd -- bash
+kubectl exec -it data-upload-pod -n namespace -- bash
 
 # Inside the pod:
 apt update && apt install -y unzip
@@ -52,7 +52,7 @@ ls -la  # Verify extraction
 exit
 
 # Clean up upload pod
-kubectl delete pod data-upload-pod -n longweiwangusd
+kubectl delete pod data-upload-pod -n namespace
 ```
 
 ## Step 3: Interactive Development (Optional)
@@ -62,10 +62,10 @@ kubectl delete pod data-upload-pod -n longweiwangusd
 kubectl apply -f exp_pod.yaml
 
 # Wait for pod to be running
-kubectl get pods -n longweiwangusd
+kubectl get pods -n namespace
 
 # Access the pod
-kubectl exec -it imagenet-experiment-pod -n longweiwangusd -- bash
+kubectl exec -it imagenet-experiment-pod -n namespace -- bash
 
 # Setup environment inside pod
 cd /data
@@ -92,7 +92,7 @@ nvidia-smi
 
 # Copy your training code
 # From local machine (new terminal):
-kubectl cp 10layer_full_eqv_imagenet.py longweiwangusd/imagenet-experiment-pod:/data/imagenet_experiment.py
+kubectl cp 10layer_full_eqv_imagenet.py namespace/imagenet-experiment-pod:/data/imagenet_experiment.py
 
 # Test run (optional)
 python imagenet_experiment.py
@@ -105,20 +105,20 @@ exit
 
 ```bash
 # Delete interactive pod (required - PVC can only mount to one pod)
-kubectl delete pod imagenet-experiment-pod -n longweiwangusd
+kubectl delete pod imagenet-experiment-pod -n namespace
 
 # Deploy training job
 kubectl apply -f train_job.yaml
 
 # Monitor job status
-kubectl get jobs -n longweiwangusd
-kubectl get pods -n longweiwangusd
+kubectl get jobs -n namespace
+kubectl get pods -n namespace
 
 # Follow training logs
-kubectl logs job/imagenet-training-job -n longweiwangusd -f
+kubectl logs job/imagenet-training-job -n namespace -f
 
 # Check job completion
-kubectl get jobs -n longweiwangusd
+kubectl get jobs -n namespace
 ```
 
 ## Step 5: Access Trained Model
@@ -128,28 +128,28 @@ kubectl get jobs -n longweiwangusd
 kubectl apply -f exp_pod.yaml
 
 # Access the pod
-kubectl exec -it imagenet-experiment-pod -n longweiwangusd -- bash
+kubectl exec -it imagenet-experiment-pod -n namespace -- bash
 
 # Check saved model
 cd /data
 ls -la *.pth
 
 # Download model to local machine (from local terminal)
-kubectl cp longweiwangusd/imagenet-experiment-pod:/data/10layerfulleqv_imagenet100.pth ./trained_model.pth
+kubectl cp namespace/imagenet-experiment-pod:/data/10layerfulleqv_imagenet100.pth ./trained_model.pth
 
 # Clean up
 exit
-kubectl delete pod imagenet-experiment-pod -n longweiwangusd
+kubectl delete pod imagenet-experiment-pod -n namespace
 ```
 
 ## Step 6: Cleanup
 
 ```bash
 # Delete completed job
-kubectl delete job imagenet-training-job -n longweiwangusd
+kubectl delete job imagenet-training-job -n namespace
 
 # Delete PVC (only when completely done - this deletes all data!)
-kubectl delete pvc experiment-data-pvc -n longweiwangusd
+kubectl delete pvc experiment-data-pvc -n namespace
 ```
 
 ## Important Notes
@@ -173,7 +173,7 @@ kubectl delete pvc experiment-data-pvc -n longweiwangusd
 
 **PVC Multi-Attach Error**: Only one pod can mount `ReadWriteOnce` PVC at a time
 ```bash
-kubectl delete pod <conflicting-pod-name> -n longweiwangusd
+kubectl delete pod <conflicting-pod-name> -n namespace
 ```
 
 **GPU Pod Stuck in ContainerCreating**: Check if RTX A6000 is available
@@ -190,19 +190,19 @@ pip install "numpy>=1.19.0,<1.24.0"
 
 ```bash
 # Check all resources in namespace
-kubectl get all -n longweiwangusd
+kubectl get all -n namespace
 
 # Check PVC status
-kubectl get pvc -n longweiwangusd
+kubectl get pvc -n namespace
 
 # Check available GPU nodes
 kubectl get nodes -L nvidia.com/gpu.product
 
 # Check events for debugging
-kubectl get events -n longweiwangusd --sort-by='.lastTimestamp'
+kubectl get events -n namespace --sort-by='.lastTimestamp'
 
 # Describe pod for detailed info
-kubectl describe pod <pod-name> -n longweiwangusd
+kubectl describe pod <pod-name> -n namespace
 ```
 
 ## File Locations in PVC
