@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: data-upload-pod
+  namespace: longweiwangusd
+spec:
+  containers:
+  - name: ubuntu
+    image: ubuntu:20.04
+    command: ["/bin/bash"]
+    args: ["-c", "sleep 3600"]  # Keeps pod alive for 1 hour
+    volumeMounts:
+    - name: data-storage
+      mountPath: /data
+    resources:
+      requests:
+        memory: "16Gi"
+        cpu: "4"
+      limits:
+        memory: "32Gi"
+        cpu: "8"
+  volumes:
+  - name: data-storage
+    persistentVolumeClaim:
+      claimName: experiment-data-pvc
+  restartPolicy: Never

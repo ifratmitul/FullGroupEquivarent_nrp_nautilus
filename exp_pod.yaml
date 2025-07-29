@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: imagenet-experiment-pod
+  namespace: longweiwangusd
+spec:
+  containers:
+  - name: experiment-container
+    image: continuumio/anaconda3:latest
+    command: ["sleep", "infinity"]
+    volumeMounts:
+    - name: data-storage
+      mountPath: /data
+    - name: dshm
+      mountPath: /dev/shm
+    resources:
+      requests:
+        memory: "32Gi"
+        cpu: "8"
+        nvidia.com/rtxa6000: 1
+      limits:
+        memory: "32Gi"
+        cpu: "16"
+        nvidia.com/rtxa6000: 1
+  volumes:
+  - name: data-storage
+    persistentVolumeClaim:
+      claimName: experiment-data-pvc
+  - name: dshm
+    emptyDir:
+      medium: Memory
+      sizeLimit: "8Gi"
+  restartPolicy: Never
